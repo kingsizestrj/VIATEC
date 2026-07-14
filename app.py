@@ -1,5 +1,6 @@
 import os
-from flask import Flask, jsonify
+from flask import Flask, redirect, url_for
+from flask_cors import CORS
 
 
 def create_app(test_config=None):
@@ -30,8 +31,29 @@ def create_app(test_config=None):
     if not app.config.get("SECRET_KEY"):
         raise RuntimeError("SECRET_KEY não definida — defina a variável de ambiente SECRET_KEY")
 
+    origins = app.config["CORS_ORIGINS"]
+    origins_val = "*" if origins.strip() == "*" else [o.strip() for o in origins.split(",") if o.strip()]
+    # supports_credentials só quando há origens explícitas (cookies de sessão exigem
+    # origem específica; com "*" o navegador proíbe credenciais mesmo).
+    CORS(app, resources={r"/tec/api/*": {"origins": origins_val}},
+         supports_credentials=(origins_val != "*"))
+
+    from viabilidade.api import bp_api
+    from viabilidade.tec import bp_tec
+    from viabilidade.admin import bp_admin
+    app.register_blueprint(bp_api)
+    app.register_blueprint(bp_tec)
+    app.register_blueprint(bp_admin)
+
     @app.route("/")
     def root():
-        return jsonify({"ok": True})  # substituído por redirect na Task 10
+        return redirect(url_for("tec.index"))
+
+    from viabilidade.auth import seed_admin
+    seed_admin(app.config["USERS_FILE"], app.config["ADMIN_USER"], app.config["ADMIN_PASS"])
 
     return app
+
+
+if __name__ == "__main__":
+    create_app().run(host="0.0.0.0", port=5000, debug=False)
