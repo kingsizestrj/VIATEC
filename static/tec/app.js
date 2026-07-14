@@ -10,6 +10,8 @@
 
   const $ = (id) => document.getElementById(id);
 
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+
   function haversine(lat1, lon1, lat2, lon2) {
     const R = 6371000, rad = Math.PI / 180;
     const dphi = (lat2 - lat1) * rad, dl = (lon2 - lon1) * rad;
@@ -73,14 +75,14 @@
     } else {
       const c = perto[0];
       dest.innerHTML =
-        '<h2>' + c.nome + '</h2>' +
+        '<h2>' + esc(c.nome) + '</h2>' +
         '<div class="dist">' + fmt(c.d) + '</div>' +
-        (c.descricao ? '<div class="desc">' + c.descricao + '</div>' : '') +
+        (c.descricao ? '<div class="desc">' + esc(c.descricao) + '</div>' : '') +
         '<a class="vt-nav" href="' + navUrl(c.lat, c.lon) + '" target="_blank" rel="noopener">Navegar ▸</a>';
     }
     const ul = $("vt-lista");
     ul.innerHTML = perto.slice(1).map((c) =>
-      '<li><span class="nome">' + c.nome + '</span><span class="m">' + fmt(c.d) + '</span>' +
+      '<li><span class="nome">' + esc(c.nome) + '</span><span class="m">' + fmt(c.d) + '</span>' +
       '<a class="mini-nav" href="' + navUrl(c.lat, c.lon) + '" target="_blank" rel="noopener">Ir</a></li>'
     ).join("");
 
@@ -91,7 +93,7 @@
       boxLayer.clearLayers();
       const pts = [[pos.lat, pos.lon]];
       perto.forEach((c) => {
-        L.marker([c.lat, c.lon]).addTo(boxLayer).bindPopup("<b>" + c.nome + "</b><br>" + fmt(c.d));
+        L.marker([c.lat, c.lon]).addTo(boxLayer).bindPopup("<b>" + esc(c.nome) + "</b><br>" + fmt(c.d));
         pts.push([c.lat, c.lon]);
       });
       map.fitBounds(pts, { padding: [40, 40], maxZoom: 17 });

@@ -56,6 +56,19 @@ def test_login_bloqueia_apos_muitas_falhas(client):
     assert r.status_code == 429
 
 
+def test_login_next_externo_ignorado(client):
+    r = client.post("/tec/login?next=https://evil.com", data={"username": "joao", "senha": "1234"})
+    assert r.status_code == 302
+    assert r.headers["Location"] == "/tec/"
+    assert "evil.com" not in r.headers["Location"]
+
+
+def test_login_next_local_respeitado(client):
+    r = client.post("/tec/login?next=/tec/", data={"username": "joao", "senha": "1234"})
+    assert r.status_code == 302
+    assert r.headers["Location"] == "/tec/"
+
+
 def test_sw_servido_em_tec_com_escopo_correto(tmp_path):
     # Usa o create_app real (static_folder default = raiz do projeto) para que
     # send_static_file encontre static/tec/sw.js de verdade.

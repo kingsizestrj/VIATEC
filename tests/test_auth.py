@@ -138,3 +138,23 @@ def test_rate_limit_sucesso_zera():
         auth.registrar_falha(chave)
     auth.registrar_sucesso(chave)
     assert auth.login_bloqueado(chave) is False
+
+
+def test_next_seguro_aceita_caminho_local():
+    assert auth.next_seguro("/x", "/fallback") == "/x"
+
+
+def test_next_seguro_rejeita_url_externa():
+    assert auth.next_seguro("https://evil.com", "/fallback") == "/fallback"
+
+
+def test_next_seguro_rejeita_protocol_relative():
+    assert auth.next_seguro("//evil.com", "/fallback") == "/fallback"
+
+
+def test_next_seguro_rejeita_none():
+    assert auth.next_seguro(None, "/fallback") == "/fallback"
+
+
+def test_next_seguro_rejeita_vazio():
+    assert auth.next_seguro("", "/fallback") == "/fallback"

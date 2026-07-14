@@ -110,6 +110,13 @@ def tec_required(f):
     return wrapper
 
 
+def next_seguro(nxt, fallback):
+    """Só aceita next se for um caminho local (evita open redirect)."""
+    if nxt and nxt.startswith("/") and not nxt.startswith("//"):
+        return nxt
+    return fallback
+
+
 def admin_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):

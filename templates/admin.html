@@ -100,13 +100,14 @@
 
   <script src="{{ url_for('static', filename='vendor/leaflet/leaflet.js') }}"></script>
   <script>
+    function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
     const map = L.map('map').setView([-15.78, -47.93], 4);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
       {subdomains:'abcd', maxZoom:19, attribution:'© OSM © CARTO'}).addTo(map);
     fetch("/tec/api/caixas", {credentials: "same-origin"}).then(r => r.json()).then(d => {
       const pts = [];
       (d.caixas || []).forEach(c => {
-        L.marker([c.lat, c.lon]).addTo(map).bindPopup('<b>' + c.nome + '</b><br>' + (c.descricao || ''));
+        L.marker([c.lat, c.lon]).addTo(map).bindPopup('<b>' + esc(c.nome) + '</b><br>' + esc(c.descricao || ''));
         pts.push([c.lat, c.lon]);
       });
       if (pts.length) map.fitBounds(pts, {padding: [40, 40]});

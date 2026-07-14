@@ -17,6 +17,7 @@ SECRET_KEY=dev ADMIN_USER=admin ADMIN_PASS=admin123 DATA_DIR=./data COOKIE_SECUR
 ## Testes
 
 ```bash
+pip install -r requirements-dev.txt
 python -m pytest -v
 ```
 

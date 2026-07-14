@@ -5,7 +5,7 @@ from flask import (Blueprint, render_template, request, redirect, url_for,
 from .core import parse_kml, save_cache, load_caixas, load_config, save_config
 from .auth import (verificar_usuario, login_session, logout_session, criar_usuario,
                    listar_usuarios, set_ativo, remover_usuario, load_users, admin_required,
-                   login_bloqueado, registrar_falha, registrar_sucesso)
+                   login_bloqueado, registrar_falha, registrar_sucesso, next_seguro)
 
 bp_admin = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -22,7 +22,7 @@ def login():
         if user and user["role"] == "admin":
             registrar_sucesso(chave)
             login_session(session, user)
-            return redirect(request.args.get("next") or url_for("admin.index"))
+            return redirect(next_seguro(request.args.get("next"), url_for("admin.index")))
         registrar_falha(chave)
         if not current_app.config.get("TESTING"):
             time.sleep(0.5)

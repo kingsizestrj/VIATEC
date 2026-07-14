@@ -1,7 +1,7 @@
 import time
 from flask import Blueprint, render_template, request, redirect, url_for, session, current_app
 from .auth import (verificar_usuario, login_session, logout_session, tec_required,
-                   login_bloqueado, registrar_falha, registrar_sucesso)
+                   login_bloqueado, registrar_falha, registrar_sucesso, next_seguro)
 
 bp_tec = Blueprint("tec", __name__, url_prefix="/tec")
 
@@ -20,7 +20,7 @@ def login():
         if user:
             registrar_sucesso(chave)
             login_session(session, user)
-            return redirect(request.args.get("next") or url_for("tec.index"))
+            return redirect(next_seguro(request.args.get("next"), url_for("tec.index")))
         registrar_falha(chave)
         if not current_app.config.get("TESTING"):
             time.sleep(0.5)
