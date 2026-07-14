@@ -70,3 +70,16 @@ def load_caixas(cache_file, kml_file):
         save_cache(cache_file, caixas)
         return caixas
     return []
+
+
+def load_config(config_file, default_raio):
+    if os.path.exists(config_file):
+        with open(config_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return {"raio_metros": float(data.get("raio_metros", default_raio))}
+    return {"raio_metros": float(default_raio)}
+
+
+def save_config(config_file, config):
+    with open(config_file, "w", encoding="utf-8") as f:
+        json.dump({"raio_metros": float(config["raio_metros"])}, f)

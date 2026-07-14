@@ -62,3 +62,14 @@ def test_load_caixas_parseia_kml_quando_sem_cache(tmp_path):
 
 def test_load_caixas_vazio_sem_kml_sem_cache(tmp_path):
     assert core.load_caixas(str(tmp_path / "c.json"), str(tmp_path / "k.kml")) == []
+
+
+def test_load_config_default_quando_sem_arquivo(tmp_path):
+    cfg = core.load_config(str(tmp_path / "config.json"), 200.0)
+    assert cfg["raio_metros"] == 200.0
+
+
+def test_save_e_load_config(tmp_path):
+    path = str(tmp_path / "config.json")
+    core.save_config(path, {"raio_metros": 350.0})
+    assert core.load_config(path, 200.0)["raio_metros"] == 350.0
