@@ -108,7 +108,7 @@
   }
 
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/static/tec/sw.js").catch(() => {});
+    navigator.serviceWorker.register("/tec/sw.js").catch(() => {});
   }
   carregarCaixas();
   iniciarGPS();

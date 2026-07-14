@@ -2,6 +2,7 @@ import pytest
 from flask import Flask
 from viabilidade.tec import bp_tec
 from viabilidade import auth
+from app import create_app
 
 
 @pytest.fixture(autouse=True)
@@ -53,3 +54,20 @@ def test_login_bloqueia_apos_muitas_falhas(client):
     # bloqueado agora mesmo com a senha certa
     r = client.post("/tec/login", data={"username": "joao", "senha": "1234"})
     assert r.status_code == 429
+
+
+def test_sw_servido_em_tec_com_escopo_correto(tmp_path):
+    # Usa o create_app real (static_folder default = raiz do projeto) para que
+    # send_static_file encontre static/tec/sw.js de verdade.
+    app = create_app({
+        "SECRET_KEY": "t",
+        "DATA_DIR": str(tmp_path),
+        "TESTING": True,
+        "ADMIN_USER": "admin",
+        "ADMIN_PASS": "admin1234",
+    })
+    client = app.test_client()
+    r = client.get("/tec/sw.js")
+    assert r.status_code == 200
+    assert "javascript" in r.headers["Content-Type"]
+    assert "vt-shell" in r.get_data(as_text=True)

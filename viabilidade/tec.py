@@ -39,3 +39,11 @@ def logout():
 @tec_required
 def index():
     return render_template("tec.html", nome=session.get("nome", ""))
+
+
+@bp_tec.route("/sw.js")
+def service_worker():
+    resp = current_app.send_static_file("tec/sw.js")
+    resp.headers["Service-Worker-Allowed"] = "/tec/"
+    resp.headers["Content-Type"] = "application/javascript"
+    return resp

@@ -29,8 +29,10 @@ self.addEventListener("fetch", (e) => {
     e.respondWith(
       fetch(e.request)
         .then((resp) => {
-          const copia = resp.clone();
-          caches.open(CACHE).then((c) => c.put("/tec/", copia));
+          if (resp.ok) {
+            const copia = resp.clone();
+            caches.open(CACHE).then((c) => c.put("/tec/", copia));
+          }
           return resp;
         })
         .catch(() => caches.match(e.request).then((hit) => hit || caches.match("/tec/")))
