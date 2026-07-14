@@ -55,3 +55,86 @@ def test_seed_admin_cria_uma_vez(tmp_path):
 def test_seed_admin_sem_env_e_sem_admin_erro(tmp_path):
     with pytest.raises(RuntimeError):
         auth.seed_admin(users_file(tmp_path), None, None)
+
+
+from flask import Flask, session, jsonify
+
+
+def make_app():
+    app = Flask(__name__)
+    app.secret_key = "t"
+
+    @app.route("/set/<role>")
+    def do_set(role):
+        auth.login_session(session, {"username": "u", "nome": "U", "role": role})
+        return "ok"
+
+    @app.route("/atual")
+    def atual():
+        return jsonify(auth.usuario_atual(session) or {})
+
+    @app.route("/protegida-tec")
+    @auth.tec_required
+    def protegida_tec():
+        return "tec-ok"
+
+    @app.route("/protegida-admin")
+    @auth.admin_required
+    def protegida_admin():
+        return "admin-ok"
+
+    # blueprints reais definem tec.login e admin.login; aqui criamos stubs com esses endpoints
+    @app.route("/tec/login", endpoint="tec.login")
+    def tec_login():
+        return "tec-login"
+
+    @app.route("/admin/login", endpoint="admin.login")
+    def admin_login():
+        return "admin-login"
+
+    return app
+
+
+def test_tec_required_redireciona_sem_sessao():
+    c = make_app().test_client()
+    r = c.get("/protegida-tec")
+    assert r.status_code == 302
+    assert "/tec/login" in r.headers["Location"]
+
+
+def test_tec_required_permite_com_sessao():
+    c = make_app().test_client()
+    c.get("/set/tec")
+    assert c.get("/protegida-tec").data == b"tec-ok"
+
+
+def test_admin_required_bloqueia_tec():
+    c = make_app().test_client()
+    c.get("/set/tec")
+    r = c.get("/protegida-admin")
+    assert r.status_code == 302
+    assert "/admin/login" in r.headers["Location"]
+
+
+def test_admin_required_permite_admin():
+    c = make_app().test_client()
+    c.get("/set/admin")
+    assert c.get("/protegida-admin").data == b"admin-ok"
+
+
+def test_rate_limit_bloqueia_apos_max_tentativas():
+    auth._TENTATIVAS.clear()
+    chave = "joao|1.2.3.4"
+    for _ in range(auth.MAX_TENTATIVAS):
+        assert auth.login_bloqueado(chave) is False
+        auth.registrar_falha(chave)
+    assert auth.login_bloqueado(chave) is True
+
+
+def test_rate_limit_sucesso_zera():
+    auth._TENTATIVAS.clear()
+    chave = "joao|1.2.3.4"
+    for _ in range(auth.MAX_TENTATIVAS):
+        auth.registrar_falha(chave)
+    auth.registrar_sucesso(chave)
+    assert auth.login_bloqueado(chave) is False

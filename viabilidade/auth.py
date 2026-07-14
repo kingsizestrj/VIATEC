@@ -1,5 +1,8 @@
 import json
 import os
+import time
+from functools import wraps
+from flask import session as flask_session, redirect, url_for, request
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
@@ -80,3 +83,66 @@ def seed_admin(users_file, admin_user, admin_pass):
         raise RuntimeError("Nenhum admin cadastrado e ADMIN_USER/ADMIN_PASS não definidos")
     criar_usuario(users_file, admin_user, "Administrador", admin_pass, role="admin")
     return True
+
+
+def login_session(session, user):
+    session["username"] = user["username"]
+    session["role"] = user["role"]
+    session["nome"] = user.get("nome", "")
+
+
+def logout_session(session):
+    session.clear()
+
+
+def usuario_atual(session):
+    if session.get("username"):
+        return {"username": session["username"], "role": session.get("role"), "nome": session.get("nome", "")}
+    return None
+
+
+def tec_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not flask_session.get("username"):
+            return redirect(url_for("tec.login", next=request.path))
+        return f(*args, **kwargs)
+    return wrapper
+
+
+def admin_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if flask_session.get("role") != "admin":
+            return redirect(url_for("admin.login", next=request.path))
+        return f(*args, **kwargs)
+    return wrapper
+
+
+# ── Proteção leve contra brute-force (em memória, por worker) ──
+_TENTATIVAS = {}          # chave -> lista de timestamps de falhas recentes
+MAX_TENTATIVAS = 5
+JANELA_SEGUNDOS = 300
+
+
+def _falhas_recentes(chave, agora):
+    recentes = [t for t in _TENTATIVAS.get(chave, []) if agora - t < JANELA_SEGUNDOS]
+    if recentes:
+        _TENTATIVAS[chave] = recentes
+    else:
+        _TENTATIVAS.pop(chave, None)
+    return recentes
+
+
+def login_bloqueado(chave):
+    return len(_falhas_recentes(chave, time.time())) >= MAX_TENTATIVAS
+
+
+def registrar_falha(chave):
+    agora = time.time()
+    _falhas_recentes(chave, agora)
+    _TENTATIVAS.setdefault(chave, []).append(agora)
+
+
+def registrar_sucesso(chave):
+    _TENTATIVAS.pop(chave, None)
