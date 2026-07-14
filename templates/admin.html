@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Viabilidade — Painel Admin</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/leaflet/leaflet.css') }}"/>
+  <style>
+    :root{--bg:#0a0e1a;--surface:#111827;--surface2:#1a2236;--border:#1e2d45;--accent:#00d4ff;--accent2:#00ff88;--danger:#ff4560;--text:#e8edf5;--muted:#6b7e99}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:system-ui,sans-serif}
+    header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;gap:12px;align-items:center}
+    header a{margin-left:auto;color:var(--muted);text-decoration:none}
+    .layout{display:grid;grid-template-columns:380px 1fr;height:calc(100vh - 57px)}
+    .sidebar{padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:16px;background:var(--surface)}
+    .card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px}
+    .card h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:12px}
+    input,button{font:inherit}
+    input[type=file],input[type=number],input[type=text],input[type=password]{width:100%;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);margin-bottom:8px}
+    button{padding:9px 12px;border:0;border-radius:8px;background:var(--accent);color:var(--bg);font-weight:700;cursor:pointer}
+    button.danger{background:var(--danger);color:#fff}
+    .stats{display:flex;gap:12px}
+    .stat{flex:1;background:var(--bg);border-radius:8px;padding:12px;text-align:center}
+    .stat b{font-size:1.6rem;color:var(--accent)}
+    .flash{border-radius:8px;padding:10px 12px;font-size:.85rem}
+    .flash.ok{background:rgba(0,255,136,.1);border:1px solid var(--accent2);color:var(--accent2)}
+    .flash.erro{background:rgba(255,69,96,.1);border:1px solid var(--danger);color:var(--danger)}
+    table{width:100%;border-collapse:collapse;font-size:.85rem}
+    td,th{text-align:left;padding:6px 4px;border-bottom:1px solid var(--border)}
+    .inline{display:inline}
+    #map{width:100%;height:100%}
+    @media(max-width:768px){.layout{grid-template-columns:1fr;grid-template-rows:auto 360px;height:auto}}
+  </style>
+</head>
+<body>
+  <header>
+    <span>📡 Viabilidade — Admin</span>
+    {% if tem_kml %}<span style="color:var(--accent2)">● KML ativo</span>{% endif %}
+    <a href="{{ url_for('admin.logout') }}">Sair</a>
+  </header>
+  <div class="layout">
+    <aside class="sidebar">
+      {% with msgs = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in msgs %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
+      {% endwith %}
+
+      <div class="card">
+        <h2>Resumo</h2>
+        <div class="stats">
+          <div class="stat"><b>{{ total }}</b><div>caixas</div></div>
+          <div class="stat"><b>{{ raio }}m</b><div>raio</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Carregar KML</h2>
+        <form action="{{ url_for('admin.upload') }}" method="POST" enctype="multipart/form-data">
+          <input type="file" name="kml" accept=".kml" required/>
+          <button type="submit">Enviar e processar</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>Raio de atendimento</h2>
+        <form action="{{ url_for('admin.raio') }}" method="POST">
+          <input type="number" name="raio" value="{{ raio }}" min="10" max="5000" step="10"/>
+          <button type="submit">Salvar</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>Técnicos</h2>
+        <form action="{{ url_for('admin.tecnicos_criar') }}" method="POST">
+          <input type="text" name="username" placeholder="Usuário" required/>
+          <input type="text" name="nome" placeholder="Nome"/>
+          <input type="password" name="senha" placeholder="Senha" required/>
+          <button type="submit">Adicionar técnico</button>
+        </form>
+        <table>
+          <tr><th>Usuário</th><th>Nome</th><th></th></tr>
+          {% for t in tecnicos %}
+          <tr>
+            <td>{{ t.username }}{% if not t.ativo %} <small>(inativo)</small>{% endif %}</td>
+            <td>{{ t.nome }}</td>
+            <td>
+              <form class="inline" method="POST" action="{{ url_for('admin.tecnicos_toggle', username=t.username) }}">
+                <button type="submit">{{ 'Desativar' if t.ativo else 'Ativar' }}</button>
+              </form>
+              <form class="inline" method="POST" action="{{ url_for('admin.tecnicos_delete', username=t.username) }}">
+                <button class="danger" type="submit">Remover</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+    </aside>
+    <main><div id="map"></div></main>
+  </div>
+
+  <script src="{{ url_for('static', filename='vendor/leaflet/leaflet.js') }}"></script>
+  <script>
+    const map = L.map('map').setView([-15.78, -47.93], 4);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+      {subdomains:'abcd', maxZoom:19, attribution:'© OSM © CARTO'}).addTo(map);
+    fetch("/tec/api/caixas", {credentials: "same-origin"}).then(r => r.json()).then(d => {
+      const pts = [];
+      (d.caixas || []).forEach(c => {
+        L.marker([c.lat, c.lon]).addTo(map).bindPopup('<b>' + c.nome + '</b><br>' + (c.descricao || ''));
+        pts.push([c.lat, c.lon]);
+      });
+      if (pts.length) map.fitBounds(pts, {padding: [40, 40]});
+    });
+  </script>
+</body>
+</html>
