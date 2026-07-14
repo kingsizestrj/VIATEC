@@ -1,0 +1,24 @@
+services:
+  viabilidade-tecnico:
+    build: .
+    container_name: viabilidade-tecnico
+    restart: unless-stopped
+    ports:
+      - "5001:5000"           # host:container — 5001 no host p/ não colidir com a app de produção
+    volumes:
+      - tecnico_data:/app/data
+    environment:
+      - SECRET_KEY=${SECRET_KEY:?defina SECRET_KEY}
+      - ADMIN_USER=${ADMIN_USER:-admin}
+      - ADMIN_PASS=${ADMIN_PASS:?defina ADMIN_PASS}
+      - RAIO_METROS=200
+      - CORS_ORIGINS=*
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/tec/login"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  tecnico_data:
+    driver: local

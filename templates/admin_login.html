@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin — Entrar</title>
+  <style>
+    body{background:#0a0e1a;color:#e8edf5;font-family:system-ui,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}
+    form{background:#111827;border:1px solid #1e2d45;border-radius:12px;padding:28px;width:300px;display:flex;flex-direction:column;gap:12px}
+    h1{font-size:1.1rem;margin:0 0 8px}
+    input{padding:10px;border-radius:8px;border:1px solid #1e2d45;background:#0a0e1a;color:#e8edf5}
+    button{padding:10px;border:0;border-radius:8px;background:#00d4ff;color:#0a0e1a;font-weight:700;cursor:pointer}
+    .erro{color:#ff4560;font-size:.85rem;margin:0}
+  </style>
+</head>
+<body>
+  <form method="POST" action="{{ url_for('admin.login') }}">
+    <h1>Painel Admin</h1>
+    {% if erro %}<p class="erro">{{ erro }}</p>{% endif %}
+    <input name="username" placeholder="Usuário" required/>
+    <input name="senha" type="password" placeholder="Senha" required/>
+    <button type="submit">Entrar</button>
+  </form>
+</body>
+</html>
