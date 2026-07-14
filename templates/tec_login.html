@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Voltec Técnico — Entrar</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='tec/tec.css') }}"/>
+</head>
+<body class="vt-login-body">
+  <form class="vt-login" method="POST" action="{{ url_for('tec.login') }}">
+    <h1>Voltec Técnico</h1>
+    {% if erro %}<p class="vt-erro">{{ erro }}</p>{% endif %}
+    <input name="username" placeholder="Usuário" autocomplete="username" required/>
+    <input name="senha" type="password" placeholder="Senha" autocomplete="current-password" required/>
+    <button type="submit">Entrar</button>
+  </form>
+</body>
+</html>
