@@ -1,0 +1,25 @@
+:root{--bg:#0a0e1a;--surface:#111827;--border:#1e2d45;--accent:#00d4ff;--accent2:#00ff88;--danger:#ff4560;--text:#e8edf5;--muted:#6b7e99}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif}
+.vt-login-body{display:flex;min-height:100vh;align-items:center;justify-content:center}
+.vt-login{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px;width:300px;display:flex;flex-direction:column;gap:12px}
+.vt-login h1{font-size:1.1rem}
+.vt-login input{padding:11px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text)}
+.vt-login button{padding:11px;border:0;border-radius:8px;background:var(--accent);color:var(--bg);font-weight:700}
+.vt-erro{color:var(--danger);font-size:.85rem}
+.vt-app{display:flex;flex-direction:column;min-height:100vh}
+.vt-header{display:flex;align-items:center;gap:8px;padding:14px 16px;background:var(--surface);border-bottom:1px solid var(--border);font-weight:600}
+.vt-sair{margin-left:auto;color:var(--muted);text-decoration:none;font-size:.85rem}
+.vt-status{padding:8px 16px;font-size:.8rem;color:var(--muted);background:var(--surface)}
+.vt-status.offline{color:var(--danger)}
+.vt-destaque{margin:12px 16px;padding:16px;border-radius:12px;background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--accent2)}
+.vt-destaque h2{font-size:1.1rem;color:var(--accent2)}
+.vt-destaque .dist{font-size:2rem;font-weight:700}
+.vt-destaque .desc{color:var(--muted);font-size:.85rem;margin-top:4px}
+.vt-nav{display:inline-block;margin-top:10px;padding:10px 16px;background:var(--accent);color:var(--bg);border:0;border-radius:8px;font-weight:700;text-decoration:none;cursor:pointer}
+.vt-map{height:38vh;margin:0 16px;border-radius:12px;overflow:hidden}
+.vt-lista{list-style:none;margin:12px 16px 32px}
+.vt-lista li{display:flex;align-items:center;gap:10px;padding:12px;border-bottom:1px solid var(--border)}
+.vt-lista .nome{font-weight:600}
+.vt-lista .m{margin-left:auto;color:var(--accent);font-variant-numeric:tabular-nums}
+.vt-lista .mini-nav{padding:6px 10px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);text-decoration:none;font-size:.8rem}
