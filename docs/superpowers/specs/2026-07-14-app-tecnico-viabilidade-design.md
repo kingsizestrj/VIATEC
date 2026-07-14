@@ -154,7 +154,14 @@ exibe aviso de "dados de DD/MM HH:MM".
   fonte da verdade e as variáveis podem ser removidas.
 - **Proteção leve contra brute-force** no login (limite simples de tentativas por
   usuário/IP, com pequeno atraso). Mantida simples na v1.
-- **CORS removido** (`flask-cors` sai): tudo é mesma origem, não há widget externo.
+- **CORS habilitado e configurável** (`flask-cors`): aplicado às rotas de API
+  (`/tec/api/*`), com as origens permitidas vindas da variável de ambiente
+  `CORS_ORIGINS` (lista separada por vírgula; default `*`). Diferente do
+  `CORS(app)` liberado geral do projeto original, aqui dá para restringir a
+  origens específicas. **Nota:** como a autenticação é por cookie de sessão,
+  acesso cross-origin *com credenciais* exige origens explícitas (não `*`) e
+  `supports_credentials=True` — a ser definido em `CORS_ORIGINS` quando esse uso
+  existir.
 
 ## 8. PWA / offline
 
@@ -181,12 +188,16 @@ exibe aviso de "dados de DD/MM HH:MM".
 - **`Dockerfile` / `docker-compose.yml`** próprios; volume próprio para `/app/data`.
 - **Servidor WSGI de produção**: troca do flask dev server (`app.run`) por
   **gunicorn**, adequado a um app com login em produção.
-- **Nginx** em um novo domínio/subdomínio (ex.: `tecnico.voltecautomacao.com.br`),
-  com TLS, apontando para o container:
-  ```nginx
-  location / { proxy_pass http://<host-do-app-tecnico>:5000; }
-  ```
-  Sem o bloqueio de `text/html` — o login já protege tudo.
+- **Proxy reverso via Nginx Proxy Manager (NPM)**, que já roda em produção: o
+  deploy apenas expõe a porta do container; no NPM cria-se um **Proxy Host** novo
+  para o novo domínio/subdomínio (ex.: `tecnico.voltecautomacao.com.br`) apontando
+  para `host:porta` do container, com **TLS/Let's Encrypt** gerenciado pelo próprio
+  NPM. Nenhum arquivo `nginx.conf` escrito à mão; **sem** o bloqueio de `text/html`
+  — o login já protege tudo. Recomenda-se ativar no Proxy Host: *Websockets
+  Support* (não obrigatório) e *Block Common Exploits*.
+- **Variáveis de ambiente** (docker-compose): `SECRET_KEY` (obrigatória),
+  `ADMIN_USER` / `ADMIN_PASS` (primeiro boot), `RAIO_METROS` (default),
+  `CORS_ORIGINS` (default `*`).
 - **KML**: o admin faz o upload do mesmo KML nesse app novo (passo manual).
 
 ## 11. Correções herdadas do projeto original (aplicar nesta cópia)
@@ -194,7 +205,8 @@ exibe aviso de "dados de DD/MM HH:MM".
 - Raio de atendimento **agora persiste** (`config.json`) — no original era um global
   em memória perdido a cada restart.
 - Remover **`xmltodict`** (dependência morta; o parsing usa `xml.etree.ElementTree`).
-- Remover **`flask-cors`** (não é mais necessário).
+- Manter **`flask-cors`**, porém **configurável por `CORS_ORIGINS`** em vez do
+  `CORS(app)` liberado geral (ver Segurança).
 - Não copiar o arquivo **`data`** de 0 byte que existe na raiz do original.
 - Trocar **flask dev server → gunicorn**.
 - Adicionar **autenticação** (o original não tinha nenhuma).
